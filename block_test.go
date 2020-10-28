@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,39 +8,35 @@ import (
 var testImagePath string
 var subPath = "tests"
 
-func TestSerial(t *testing.T) {
-	testImagePath := saveBitmapAtCoords(subPath, 10, 20, 30, 40)
-	loadBitmaps(subPath)
-	if isKeyInStore(testImagePath) != true {
-		t.Fatalf("%s did not exists", testImagePath)
-	}
-	openBitmap(testImagePath)
-	resultKey, exists := getActiveImage(subPath, 0, 0, 64, 64)
-	fmt.Println("result match", resultKey)
-	if exists == false {
-		t.Fatalf("no match for active image")
-	}
-	deleteError := deleteBitmap(testImagePath)
-	if deleteError != nil {
-		t.Fatalf("could not delete %s", testImagePath)
-	}
-}
-
-// func TestSaveBitmapAtCoords(t *testing.T) {
-// 	resultID, testImagePath := saveBitmapAtCoords(subPath, 10, 20, 30, 40)
-// 	fmt.Println(resultID, testImagePath)
-// }
-
-// func TestLoadBitmaps(t *testing.T) {
+// func TestBitmaps(t *testing.T) {
+// 	testImagePath := saveBitmapAtCoords(subPath, 10, 20, 30, 40)
 // 	loadBitmaps(subPath)
 // 	if isKeyInStore(testImagePath) != true {
 // 		t.Fatalf("%s did not exists", testImagePath)
 // 	}
+// 	openBitmap(testImagePath)
+// 	resultKey, exists := getActiveImage(subPath, 0, 0, 64, 64)
+// 	fmt.Println("result match", resultKey)
+// 	if exists == false {
+// 		t.Fatalf("no match for active image")
+// 	}
+// 	deleteError := deleteBitmap(testImagePath)
+// 	if deleteError != nil {
+// 		t.Fatalf("could not delete %s", testImagePath)
+// 	}
+// 	emptyStore()
 // }
 
-// func TestOpenBitmap(t *testing.T) {
-// 	openBitmap(testImagePath)
-// }
+func TestActions(t *testing.T) {
+	path := "foobar"
+	actionPath := "config.json"
+	//fmt.Println("TEST starting action TEST")
+	//time.Sleep(time.Second * 3)
+	loadActions(actionPath)
+	addAction(path, "i", []string{"shift"})
+	printActions()
+	//sendAction(path)
+}
 
 func TestUuid(t *testing.T) {
 	id := uuid()

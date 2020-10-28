@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -9,12 +10,82 @@ import (
 	"time"
 
 	"github.com/go-vgo/robotgo"
+	hook "github.com/robotn/gohook"
 )
 
 var imageStore = make(map[string]robotgo.Bitmap)
+var actionStore = make(map[string]action)
 
-func main() {
-	startPolling1()
+// Config does foo
+type Config struct {
+	Name    string
+	Actions []action
+}
+
+type action struct {
+	Name string
+	Path string
+	Key  string
+	Mods []string
+}
+
+func sendAction(path string) {
+	a, ok := actionStore[path]
+	if ok {
+		if len(a.Mods) > 0 {
+			robotgo.KeyTap(a.Key, a.Mods)
+		} else {
+			robotgo.KeyTap(a.Key)
+		}
+	}
+}
+
+func getAction(path string) (action, bool) {
+	a, ok := actionStore[path]
+	if ok {
+		return a, true
+	}
+	return action{}, false
+}
+
+func addAction(path, name, key string, mods []string) {
+	// fmt.Println("storing::", id)
+	a := action{Path: path, Name: name, Key: key, Mods: mods}
+	actionStore[path] = a
+}
+
+func printActions() {
+	for _, a := range actionStore {
+		fmt.Println(a)
+	}
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func loadActions(path string) {
+	fileHook, err := os.Open(path)
+	defer fileHook.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	jsonParser := json.NewDecoder(fileHook)
+	config := Config{}
+	jsonParser.Decode(&config)
+	for _, a := range config.Actions {
+		addAction(a.Path, a.Name, a.Key, a.Mods)
+	}
+}
+
+func printNBytesOfFile(f *os.File) {
+	b1 := make([]byte, 150)
+	n1, err := f.Read(b1)
+	check(err)
+	fmt.Printf("%d bytes: %s\n", n1, string(b1[:n1]))
 }
 
 func storeBitmap(id string, b robotgo.Bitmap) {
@@ -84,15 +155,14 @@ func getActiveImage(subPath string, x, y, w, h int) (string, bool) {
 	for k, v := range imageStore {
 		bitmapToFind := robotgo.ToCBitmap(v)
 		fx, fy := robotgo.FindBitmap(bitmapToFind, searchSpace, 0.01)
-		if fx == -1 || fy == -1 {
-			return "none", false
+		if fx > -1 && fy > -1 {
+			return k, true
 		}
-		return k, true
 	}
 	// if we did not find the image
-	// path := makeBitmapPath(subPath)
-	// storeBitmap(path, robotgo.ToBitmap(current))
-
+	path := makeBitmapPath(subPath)
+	storeBitmap(path, robotgo.ToBitmap(searchSpace))
+	saveBitmap(path, robotgo.ToBitmap(searchSpace))
 	return "none", false
 }
 
@@ -106,18 +176,8 @@ func uuid() string {
 	return id
 }
 
-func saveBitmap() string {
-	bitmap := robotgo.CaptureScreen(10, 20, 30, 40)
-	// use `defer robotgo.FreeBitmap(bit)` to free the bitmap
-	defer robotgo.FreeBitmap(bitmap)
-
-	fmt.Println("...", bitmap)
-
-	fx, fy := robotgo.FindBitmap(bitmap)
-	fmt.Println("FindBitmap------ ", fx, fy)
-
-	robotgo.SaveBitmap(bitmap, "test.png")
-	return "tes1t.png"
+func saveBitmap(path string, bitmap robotgo.Bitmap) {
+	robotgo.SaveBitmap(robotgo.ToCBitmap(bitmap), path)
 }
 
 func getColor(inBit robotgo.Bitmap, x, y int) string {
@@ -134,17 +194,64 @@ func openBitmap(path string) robotgo.Bitmap {
 	return robotgo.ToBitmap(bitmap)
 }
 
-func clearMemForBitmap() {
+var wheeldown = false
+var wheelup = false
 
+func low() {
+	EvChan := hook.Start()
+	defer hook.End()
+
+	for ev := range EvChan {
+		// fmt.Println("hook: ", ev)
+		// fmt.Println("hook: ", ev.Kind)
+		if ev.Rawcode == 160 && ev.Kind == 5 {
+			fmt.Println("PAUSE")
+			wheeldown = false
+			wheelup = false
+		}
+		if ev.Kind == 11 && ev.Rotation > 0 {
+			fmt.Println("WHEELDOWN")
+			wheeldown = true
+			wheelup = false
+		}
+		if ev.Kind == 11 && ev.Rotation < 0 {
+			fmt.Println("WHEELUP")
+			wheeldown = false
+			wheelup = true
+		}
+	}
 }
 
-func doSomething(s string) {
-	fmt.Println("doing something", s)
+func main() {
+	actionPath := "config.json"
+	subPath := "tests"
+	loadBitmaps(subPath)
+	loadActions(actionPath)
+	printActions()
+	go low()
+	poll("test", &wheeldown, 5, 5, 48, 48)
+	poll("test", &wheelup, 5, 55, 48, 98)
 }
 
-func startPolling1() {
+func poll(subPath string, pause *bool, x, y, w, h int) {
+	currentActionName := "none"
 	for {
-		time.Sleep(2 * time.Second)
-		go doSomething("from polling 1")
+		time.Sleep(time.Millisecond * 333)
+		if *pause == false {
+			resultKey, exists := getActiveImage(subPath, x, y, w, h)
+			if exists {
+				newAction, ok := getAction(resultKey)
+				if ok {
+					if currentActionName != newAction.Name {
+						fmt.Println("ACTION", newAction.Name)
+						currentActionName = newAction.Name
+					}
+					sendAction(resultKey)
+				}
+			} else {
+				fmt.Println("no match")
+
+			}
+		}
 	}
 }

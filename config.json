@@ -1,0 +1,41 @@
+{
+  "Name": "one",
+  "Actions": [
+    {
+      "Path": "bitmaps\\tests\\5e19763e-77ed-d5ce-14f0-1f753943ad1c.png",
+      "Name": "concentrated flame",
+      "Key": "y",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\c86ddc7b-f2c1-c29e-8ab0-0f9d77ebabda.png",
+      "Name": "barbed shot",
+      "Key": "9",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\ca9df11c-cbbb-97a6-3d36-056f32e5a520.png",
+      "Name": "kill command",
+      "Key": "7",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\e3a3719c-abf2-ab6c-9aec-c533fdfa6bb9.png",
+      "Name": "kill shot",
+      "Key": "t",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\f98e82e5-734c-a385-0360-c85b7dc9d24a.png",
+      "Name": "mend pet",
+      "Key": "j",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\eb43ebe3-e54c-aa6a-b7a5-fe1b15783eb4.png",
+      "Name": "cobra shot",
+      "Key": "8",
+      "Mods": []
+    }
+  ]
+}
