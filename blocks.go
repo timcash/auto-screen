@@ -107,6 +107,8 @@ func (g *Game) Update() error {
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyShift) {
 		shiftDown = true
+		wheelDown = false
+		wheelUp = false
 	} else {
 		shiftDown = false
 	}
@@ -171,16 +173,19 @@ func (w *watch) loadBitmaps() {
 	for _, file := range files {
 		ext := filepath.Ext(file)
 		if ext == ".png" {
-			bit := openBitmap(file)
+
 			if a, ok := w.actionMap[file]; ok {
-				a.searchImg = bit
+				// action exists but not image loaded
+				a.setSearchImage(file)
 				a.setRenderImage(file)
+				a.hasImage = true
 
 			} else {
+				// no action so make an empty one
 				b := NewAction()
-				b.searchImg = bit
+				b.setSearchImage(file)
 				b.setRenderImage(file)
-
+				b.hasImage = true
 				w.actionMap[file] = b
 			}
 		}
@@ -194,6 +199,11 @@ func (a *Action) setRenderImage(file string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (a *Action) setSearchImage(file string) {
+	bit := openBitmap(file)
+	a.searchImg = bit
 }
 
 func (w *watch) setRenderOps() {
@@ -211,42 +221,52 @@ func (w *watch) setCoords(x, y, width, height int) {
 
 func (w *watch) poll() {
 	// find a match in image store
-	matchedAction, searchSpace := w.checkBitmapForMatch()
+	matchedAction, searchSpace, exists := w.checkBitmapForMatch()
 	w.currentAction = matchedAction
-	fmt.Println("w.currentAction")
-	fmt.Println(w.currentAction)
-	if matchedAction.Exists && len(matchedAction.Mods) > 0 {
-		robotgo.KeyTap(matchedAction.Key, matchedAction.Mods)
-		return
-	}
-
-	if matchedAction.Exists {
+	if exists && matchedAction.Exists {
+		if len(matchedAction.Mods) > 0 {
+			robotgo.KeyTap(matchedAction.Key, matchedAction.Mods)
+			return
+		}
 		robotgo.KeyTap(matchedAction.Key)
+		return
+	} else if exists {
+		// exists but not in config yet do nothing
+		fmt.Println("exists but not keys")
 		return
 	}
 	// if we did not find the image save the image to the disk
 	path := makeBitmapPath(w.subPath)
 	saveBitmap(path, searchSpace)
+	// save it to our actionMap so we match on the next round
+	new := NewAction()
+	new.Path = path
+	new.setSearchImage(path)
+	new.setRenderImage(path)
+	new.hasImage = true
+	w.actionMap[path] = new
 }
 
-func (w *watch) checkBitmapForMatch() (Action, robotgo.Bitmap) {
-	fmt.Println("checkBitmapForMatch")
+func (w *watch) checkBitmapForMatch() (Action, robotgo.Bitmap, bool) {
 	searchSpace := robotgo.CaptureScreen(w.x, w.y, w.width, w.height)
 	for _, actionToTest := range w.actionMap {
 		bitmapToFind := robotgo.ToCBitmap(actionToTest.searchImg)
 		fx, fy := robotgo.FindBitmap(bitmapToFind, searchSpace, 0.3)
 		if fx > -1 && fy > -1 {
-			return actionToTest, actionToTest.searchImg
+			fmt.Println("MATCH")
+			return actionToTest, actionToTest.searchImg, true
 		}
 	}
 	fmt.Println("no match found")
-	return emptyAction, robotgo.ToBitmap(searchSpace)
+	return emptyAction, robotgo.ToBitmap(searchSpace), false
 }
 
 // Draw the draw
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(w1.currentAction.renderImg, w1.currentAction.Key)
-	screen.DrawImage(w1.currentAction.renderImg, w1.renderOps)
+	if w1.currentAction.hasImage {
+		ebitenutil.DebugPrint(w1.currentAction.renderImg, w1.currentAction.Key)
+		screen.DrawImage(w1.currentAction.renderImg, w1.renderOps)
+	}
 }
 
 // Layout the layout
@@ -272,13 +292,14 @@ type Action struct {
 	Path      string
 	Key       string
 	Mods      []string
+	hasImage  bool
 	renderImg *ebiten.Image
 	searchImg robotgo.Bitmap
 }
 
 // NewAction is new
 func NewAction() Action {
-	a := Action{Exists: false, Name: "none", Path: ".", Key: "i", Mods: []string{"shift", "ctrl", "alt"}}
+	a := Action{Exists: false, Name: "none", hasImage: false, Path: ".", Key: "i", Mods: []string{"shift", "ctrl", "alt"}}
 	return a
 }
 
@@ -301,7 +322,7 @@ func main() {
 	w1.subPath = "tests"
 	w1.actionMap = make(map[string]Action)
 	w1.currentAction = emptyAction
-	w1.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
+	// w1.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
 	w1.loadBitmaps()
 	w1.loadActions()
 	w1.setCoords(5, 5, 48, 48)
