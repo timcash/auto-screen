@@ -8,6 +8,12 @@
       "Mods": []
     },
     {
+      "Path": "bitmaps\\tests\\concentrated_flame2.png",
+      "Name": "concentrated_flame2",
+      "Key": "y",
+      "Mods": []
+    },
+    {
       "Path": "bitmaps\\tests\\barbed_shot1.png",
       "Name": "barbed_shot1",
       "Key": "9",
@@ -46,6 +52,12 @@
     {
       "Path": "bitmaps\\tests\\mend_pet1.png",
       "Name": "mend_pet1",
+      "Key": "j",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\mend_pet2.png",
+      "Name": "mend_pet2",
       "Key": "j",
       "Mods": []
     },

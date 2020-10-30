@@ -112,6 +112,8 @@ var ctlDown = false
 var shiftDown = false
 var altDown = false
 var paused = false
+var shiftWheelUp = false
+var shiftWheelDown = false
 
 // Update the update
 func (g *Game) Update() error {
@@ -125,11 +127,13 @@ func (g *Game) Update() error {
 			w2.poll()
 			//w2poll("tests", 5, 62, 48, 48)
 		}
-		if wheelDown && shiftDown {
-			//fmt.Println("shift DOWN")
+		if shiftWheelDown {
+			// fmt.Println("shift DOWN")
+			w3.poll()
 		}
-		if wheelUp && shiftDown {
-			//fmt.Println("shift UP")
+		if shiftWheelUp {
+			// fmt.Println("shift UP")
+			w4.poll()
 		}
 	}
 	return nil
@@ -150,6 +154,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		x := w2.renderX + w2.width + 5
 		screen.DrawImage(w2.currentAction.renderImg, w2.renderOps)
 		text.Draw(screen, w2.currentAction.Key, baseFont, x, w2.renderY+14, color.White)
+	}
+	if w3.currentAction.hasImage {
+		x := w3.renderX + w3.width + 5
+		screen.DrawImage(w3.currentAction.renderImg, w3.renderOps)
+		text.Draw(screen, w3.currentAction.Key, baseFont, x, w3.renderY+14, color.White)
+	}
+	if w4.currentAction.hasImage {
+		x := w4.renderX + w4.width + 5
+		screen.DrawImage(w4.currentAction.renderImg, w4.renderOps)
+		text.Draw(screen, w4.currentAction.Key, baseFont, x, w4.renderY+14, color.White)
 	}
 }
 
@@ -339,6 +353,8 @@ func (a *Action) setSearchImage(file string) {
 
 var w1 watch = watch{name: "down"}
 var w2 watch = watch{name: "up"}
+var w3 watch = watch{name: "shift-down"}
+var w4 watch = watch{name: "shift-up"}
 
 var nameToCode = hook.Keycode
 var codeToName = make(map[uint16]string)
@@ -372,8 +388,8 @@ func main() {
 	w1.loadBitmaps()
 	w1.loadActions()
 	w1.printActions()
-	w1.setCoords(5, 5, 48, 48)
-	w1.setRenderOps(5.0, 30.0)
+	w1.setCoords(5, 5+(58*0), 48, 48)
+	w1.setRenderOps(5.0, 30.0+(50.0*0))
 
 	w2.actionPath = "config.json"
 	w2.subPath = "tests"
@@ -382,8 +398,28 @@ func main() {
 	// w2.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
 	w2.loadBitmaps()
 	w2.loadActions()
-	w2.setCoords(5, 63, 48, 48)
-	w2.setRenderOps(5.0, 80.0)
+	w2.setCoords(5, 5+(58*1), 48, 48)
+	w2.setRenderOps(5.0, 30.0+(50.0*1))
+
+	w3.actionPath = "config.json"
+	w3.subPath = "tests"
+	w3.actionMap = make(map[string]Action)
+	w3.currentAction = emptyAction
+	// w3.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
+	w3.loadBitmaps()
+	w3.loadActions()
+	w3.setCoords(5, 5+(58*2)-1, 48, 48)
+	w3.setRenderOps(5.0, 30.0+(50.0*2))
+
+	w4.actionPath = "config.json"
+	w4.subPath = "tests"
+	w4.actionMap = make(map[string]Action)
+	w4.currentAction = emptyAction
+	// w4.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
+	w4.loadBitmaps()
+	w4.loadActions()
+	w4.setCoords(5, 5+(58*3)-1, 48, 48)
+	w4.setRenderOps(5.0, 30.0+(50.0*3))
 
 	ebiten.SetWindowSize(320, 240)
 	ebiten.SetWindowTitle("Tracker")
@@ -420,14 +456,29 @@ func hookAllInput() {
 		}
 		if ev.Kind == hook.MouseWheel && ev.Rotation > 0 {
 			paused = false
-			wheelUp = false
 			wheelDown = true
-			fmt.Println("wheeldown")
+			wheelUp = false
+			shiftWheelUp = false
+			shiftWheelDown = false
+			if kt1.isDown("shift") {
+				wheelUp = false
+				wheelDown = false
+				shiftWheelUp = false
+				shiftWheelDown = true
+			}
 		}
 		if ev.Kind == hook.MouseWheel && ev.Rotation < 0 {
 			paused = false
 			wheelUp = true
 			wheelDown = false
+			shiftWheelUp = false
+			shiftWheelDown = false
+			if kt1.timeDownInMs("shift") > 1 {
+				wheelUp = false
+				wheelDown = false
+				shiftWheelUp = true
+				shiftWheelDown = false
+			}
 		}
 		if kt1.timeDownInMs("shift") > 200 {
 			paused = true
