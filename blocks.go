@@ -4,16 +4,20 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/go-vgo/robotgo"
+	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	hook "github.com/robotn/gohook"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
 // ===========================
@@ -118,7 +122,7 @@ func (g *Game) Update() error {
 			w1.poll()
 		}
 		if wheelUp {
-			fmt.Println("wheelUp")
+			w2.poll()
 			//w2poll("tests", 5, 62, 48, 48)
 		}
 		if wheelDown && shiftDown {
@@ -133,11 +137,19 @@ func (g *Game) Update() error {
 
 // Draw the draw
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Draw info
+	msg := fmt.Sprintf("TPS: %0.2f Paused: %t Shift: %v", ebiten.CurrentTPS(), paused, kt1.timeDownInMs("shift"))
+	text.Draw(screen, msg, baseFont, 5, 20, color.White)
+
 	if w1.currentAction.hasImage {
-		screen.Clear()
-		ebitenutil.DebugPrint(w1.currentAction.renderImg, strconv.FormatBool(paused))
-		// ebitenutil.DebugPrint(w1.currentAction.renderImg, w1.currentAction.Key)
 		screen.DrawImage(w1.currentAction.renderImg, w1.renderOps)
+		x := w1.renderX + w1.width + 5
+		text.Draw(screen, w1.currentAction.Key, baseFont, x, w1.renderY+14, color.White)
+	}
+	if w2.currentAction.hasImage {
+		x := w2.renderX + w2.width + 5
+		screen.DrawImage(w2.currentAction.renderImg, w2.renderOps)
+		text.Draw(screen, w2.currentAction.Key, baseFont, x, w2.renderY+14, color.White)
 	}
 }
 
@@ -159,12 +171,14 @@ type watch struct {
 	actionMap           map[string]Action
 	currentAction       Action
 	x, y, width, height int
+	renderX, renderY    int
 }
 
-func (w *watch) setRenderOps() {
-	w1.renderOps = &ebiten.DrawImageOptions{}
-	w1.renderOps.GeoM.Translate(0, 0)
-	w1.renderOps.GeoM.Scale(1, 1)
+func (w *watch) setRenderOps(x, y int) {
+	w.setRenderArea(x, y)
+	w.renderOps = &ebiten.DrawImageOptions{}
+	w.renderOps.GeoM.Translate(float64(w.renderX), float64(w.renderY))
+	w.renderOps.GeoM.Scale(1, 1)
 }
 
 func (w *watch) addImageOnlyAction(path string) {
@@ -189,6 +203,11 @@ func (w *watch) setCoords(x, y, width, height int) {
 	w.y = y
 	w.width = width
 	w.height = height
+}
+
+func (w *watch) setRenderArea(x, y int) {
+	w.renderX = x
+	w.renderY = y
 }
 
 func (w *watch) poll() {
@@ -325,7 +344,25 @@ var nameToCode = hook.Keycode
 var codeToName = make(map[uint16]string)
 var kt1 = newKeyTracker()
 
+var baseFont font.Face
+
 func main() {
+
+	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	const dpi = 72
+	baseFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    14,
+		DPI:     dpi,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fillCodeToName()
 	w1.actionPath = "config.json"
 	w1.subPath = "tests"
@@ -336,9 +373,19 @@ func main() {
 	w1.loadActions()
 	w1.printActions()
 	w1.setCoords(5, 5, 48, 48)
-	w1.setRenderOps()
+	w1.setRenderOps(5.0, 30.0)
 
-	ebiten.SetWindowSize(640, 480)
+	w2.actionPath = "config.json"
+	w2.subPath = "tests"
+	w2.actionMap = make(map[string]Action)
+	w2.currentAction = emptyAction
+	// w2.currentAction.setRenderImage("bitmaps\\tests\\7c91bf41-d1d5-f1a5-5751-e1b3084b84e1.png")
+	w2.loadBitmaps()
+	w2.loadActions()
+	w2.setCoords(5, 63, 48, 48)
+	w2.setRenderOps(5.0, 80.0)
+
+	ebiten.SetWindowSize(320, 240)
 	ebiten.SetWindowTitle("Tracker")
 
 	go hookAllInput()
@@ -382,7 +429,7 @@ func hookAllInput() {
 			wheelUp = true
 			wheelDown = false
 		}
-		if kt1.timeDownInMs("shift") > 300 {
+		if kt1.timeDownInMs("shift") > 200 {
 			paused = true
 			wheelUp = false
 			wheelDown = false

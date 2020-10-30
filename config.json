@@ -2,38 +2,62 @@
   "Name": "one",
   "Actions": [
     {
-      "Path": "bitmaps\\tests\\5e19763e-77ed-d5ce-14f0-1f753943ad1c.png",
-      "Name": "concentrated flame",
+      "Path": "bitmaps\\tests\\concentrated_flame1.png",
+      "Name": "concentrated_flame1",
       "Key": "y",
       "Mods": []
     },
     {
-      "Path": "bitmaps\\tests\\c86ddc7b-f2c1-c29e-8ab0-0f9d77ebabda.png",
-      "Name": "barbed shot",
+      "Path": "bitmaps\\tests\\barbed_shot1.png",
+      "Name": "barbed_shot1",
       "Key": "9",
       "Mods": []
     },
     {
-      "Path": "bitmaps\\tests\\ca9df11c-cbbb-97a6-3d36-056f32e5a520.png",
-      "Name": "kill command",
+      "Path": "bitmaps\\tests\\barbed_shot2.png",
+      "Name": "barbed_shot2",
+      "Key": "9",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\kill_command1.png",
+      "Name": "kill_command1",
       "Key": "7",
       "Mods": []
     },
     {
-      "Path": "bitmaps\\tests\\e3a3719c-abf2-ab6c-9aec-c533fdfa6bb9.png",
-      "Name": "kill shot",
+      "Path": "bitmaps\\tests\\kill_command2.png",
+      "Name": "kill_command2",
+      "Key": "7",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\kill_shot1.png",
+      "Name": "kill_shot1",
       "Key": "t",
       "Mods": []
     },
     {
-      "Path": "bitmaps\\tests\\f98e82e5-734c-a385-0360-c85b7dc9d24a.png",
-      "Name": "mend pet",
+      "Path": "bitmaps\\tests\\kill_shot2.png",
+      "Name": "kill_shot2",
+      "Key": "t",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\mend_pet1.png",
+      "Name": "mend_pet1",
       "Key": "j",
       "Mods": []
     },
     {
-      "Path": "bitmaps\\tests\\eb43ebe3-e54c-aa6a-b7a5-fe1b15783eb4.png",
-      "Name": "cobra shot",
+      "Path": "bitmaps\\tests\\multi_shot1.png",
+      "Name": "multi_shot1",
+      "Key": "0",
+      "Mods": []
+    },
+    {
+      "Path": "bitmaps\\tests\\cobra_shot1.png",
+      "Name": "cobra_shot1",
       "Key": "8",
       "Mods": []
     }
